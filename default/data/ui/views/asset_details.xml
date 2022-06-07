@@ -1,0 +1,121 @@
+<form version="1.1" theme="dark">
+  <label>Asset Details</label>
+  <description>This dashboard shows details around assets detected in the environment by Greenbone Vulnerability Manager.</description>
+  <init>
+    <unset token="dendrogram_viz_drilldown"></unset>
+  </init>
+  <fieldset submitButton="false" autoRun="true">
+    <input type="time" token="timeToken" searchWhenChanged="true">
+      <label>Time</label>
+      <default>
+        <earliest>-7d@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="dropdown" token="tokAsset" searchWhenChanged="true">
+      <label>Asset</label>
+      <fieldForLabel>dest</fieldForLabel>
+      <fieldForValue>dest</fieldForValue>
+      <search>
+        <query>`gvm_index` `gvm_sourcetype`
+| stats count by dest
+| fields - count
+| sort dest</query>
+        <earliest>$timeToken.earliest$</earliest>
+          <latest>$timeToken.latest$</latest>
+      </search>
+      <change>
+        <unset token="dendrogram_viz_drilldown"></unset>
+      </change>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <title>Asset Vulnerabilities</title>
+      <viz id="vizSeverity" type="dendrogram_viz.dendrogram_viz">
+        <title>* Click on a particular vulnerability for details.</title>
+        <search>
+          <query>`gvm_index` `gvm_sourcetype` dest=TERM($tokAsset$) 
+| eval drilldown='result{@id}' 
+`make_proper_case(severity)`
+| stats count by dest, drilldown, severity, signature 
+| eval path = dest + "|" + severity + "|" + signature
+| appendpipe [stats count by dest, severity | eval path = dest + "|" + severity]
+| appendpipe [stats count by dest | eval path = dest]
+| table path, drilldown 
+| eval color = case(match(path, "\|High"), "#D41F1F", match(path, "\|Medium"), "#DD9F54", match(path, "\|Low"), "#DCC160", match(path, "\|Informational"), "#53963E", true(), "#82CAFA")</query>
+          <earliest>$timeToken.earliest$</earliest>
+          <latest>$timeToken.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="dendrogram_viz.dendrogram_viz.color1">#171d21</option>
+        <option name="dendrogram_viz.dendrogram_viz.color2">#ffffff</option>
+        <option name="dendrogram_viz.dendrogram_viz.delimiter">|</option>
+        <option name="dendrogram_viz.dendrogram_viz.html">no</option>
+        <option name="dendrogram_viz.dendrogram_viz.label_size">10</option>
+        <option name="dendrogram_viz.dendrogram_viz.layout">vertical</option>
+        <option name="dendrogram_viz.dendrogram_viz.linkcolor">#555555</option>
+        <option name="dendrogram_viz.dendrogram_viz.max_rows">1000</option>
+        <option name="dendrogram_viz.dendrogram_viz.node_ancestor_spacing">100</option>
+        <option name="dendrogram_viz.dendrogram_viz.node_sibling_spacing">30</option>
+        <option name="dendrogram_viz.dendrogram_viz.node_size">6</option>
+        <option name="dendrogram_viz.dendrogram_viz.nodecolor">#999999</option>
+        <option name="dendrogram_viz.dendrogram_viz.radius">300</option>
+        <option name="dendrogram_viz.dendrogram_viz.tidy">yes</option>
+        <option name="dendrogram_viz.dendrogram_viz.zoom">yes</option>
+        <option name="displayview">search</option>
+        <option name="drilldown">all</option>
+        <option name="height">450</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+      </viz>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Asset Details</title>
+      <table id="tableVulnerabilities">
+        <search>
+          <query>`gvm_index` `gvm_sourcetype` signature_id=TERM(`cpe_inventory_nvt_oid`) dest=TERM($tokAsset$)
+| head 1
+| rex max_match=0 field="result.description" "\|cpe:(?&lt;cpe&gt;.*?)\s+"
+| table dest, cpe
+| mvexpand cpe
+| eval Type = case(match(cpe, "^\/a:.*"), "application", match(cpe, "^\/o:.*"), "operating_system", match(cpe, "^\/a:.*"), "hardware", true(), "unknown")
+| rex field=cpe "\/[aoh]+:(?&lt;Vendor&gt;.*?):(?&lt;Product&gt;.*?)(:|$)(?&lt;Version&gt;.*)"
+| table Type, Vendor, Product, Version
+| sort Type, Vendor, Product</query>
+          <earliest>$timeToken.earliest$</earliest>
+          <latest>$timeToken.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <format type="color" field="Type">
+          <colorPalette type="sharedList"></colorPalette>
+          <scale type="sharedCategory"></scale>
+        </format>
+      </table>
+    </panel>
+    <panel depends="$dendrogram_viz_drilldown$">
+      <title>Vulnerability Details</title>
+      <table>
+        <search>
+          <query>`gvm_index` `gvm_sourcetype` result{@id}="$dendrogram_viz_drilldown$" dest=TERM($tokAsset$)
+| head 1
+`make_proper_case(severity)`
+| table signature, category, severity, result.description, insight, impact
+| rename signature as "Vulnerability", category as Category, severity as Severity, result.description as Description, insight as Insight, impact as Impact</query>
+          <earliest>$timeToken.earliest$</earliest>
+          <latest>$timeToken.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <format type="color" field="Severity">
+          <colorPalette type="map">{"Informational":#53963E,"Low":#DCC160,"Medium":#DD9F54,"High":#D41F1F}</colorPalette>
+        </format>
+      </table>
+    </panel>
+  </row>
+</form>

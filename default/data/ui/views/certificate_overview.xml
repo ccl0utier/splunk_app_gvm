@@ -1,0 +1,103 @@
+<form version="1.1" theme="dark">
+  <label>Certificate Overview</label>
+  <description>This dashboard shows details around SSL/TLS certificates detected in the environment by Greenbone Vulnerability Manager.</description>
+  <init>
+    <unset token="dendrogram_viz_drilldown"></unset>
+  </init>
+  <fieldset submitButton="false" autoRun="true">
+    <input type="time" token="timeToken" searchWhenChanged="true">
+      <label>Time</label>
+      <default>
+        <earliest>-7d@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <title>Certificate Usage</title>
+      <viz id="vizSeverity" type="dendrogram_viz.dendrogram_viz">
+        <title>* Use your mouse to pan/zoom the visualization.</title>
+        <search>
+          <query>`gvm_index` `gvm_sourcetype` signature="SSL/TLS:*" 
+| rex field="result.description" "[\s,:]+(?&lt;certificate&gt;CN=.*?)\s+(Signature|key-size|public key size|subject|\(Server certificate\)|Certificate)" 
+| rex field="result.description" "(\(serial:issuer\):|\|)\s+(?&lt;serial&gt;\w+)(:|\s(subject|signature algorithm))" 
+| rex field="result.description" "valid until\s+\|\s+(?&lt;valid_until&gt;[\d\-:\s]+)\sUTC" 
+| search certificate=* 
+| eval names = if(len(certificate) &gt; 40, substr(certificate, 1, 40) + "...", certificate)
+| eval tooltip = "&lt;strong&gt;Serial:&lt;/strong&gt; " + serial + "&lt;br/&gt;&lt;strong&gt;Valid Until:&lt;/strong&gt; " + valid_until 
+| rename certificate as path 
+| stats latest(valid_until) as valid_until by path, dest, dest_ip, names, tooltip 
+| appendpipe 
+    [ eval path = path + "/" + dest 
+    | eval tooltip = "&lt;strong&gt;IP Address:&lt;/strong&gt; " + dest_ip + "&lt;br/&gt;&lt;strong&gt;Valid Until:&lt;/strong&gt; " + valid_until 
+    | stats latest(valid_until) as valid_until by path, tooltip 
+        ] 
+| table path, names, tooltip, valid_until
+| eval status = if(now() &gt; strptime(valid_until, "%Y-%m-%d %H:%M:%S"), "Expired", "Valid") 
+| eval color = case(status == "Expired", "#D41F1F", status=="Valid", "#53963E", true(), "#82CAFA")</query>
+          <earliest>$timeToken.earliest$</earliest>
+          <latest>$timeToken.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="dendrogram_viz.dendrogram_viz.color1">#171d21</option>
+        <option name="dendrogram_viz.dendrogram_viz.color2">#ffffff</option>
+        <option name="dendrogram_viz.dendrogram_viz.delimiter">/</option>
+        <option name="dendrogram_viz.dendrogram_viz.html">yes</option>
+        <option name="dendrogram_viz.dendrogram_viz.label_size">10</option>
+        <option name="dendrogram_viz.dendrogram_viz.layout">vertical</option>
+        <option name="dendrogram_viz.dendrogram_viz.linkcolor">#555555</option>
+        <option name="dendrogram_viz.dendrogram_viz.max_rows">1000</option>
+        <option name="dendrogram_viz.dendrogram_viz.node_ancestor_spacing">150</option>
+        <option name="dendrogram_viz.dendrogram_viz.node_sibling_spacing">50</option>
+        <option name="dendrogram_viz.dendrogram_viz.node_size">10</option>
+        <option name="dendrogram_viz.dendrogram_viz.nodecolor">#999999</option>
+        <option name="dendrogram_viz.dendrogram_viz.radius">300</option>
+        <option name="dendrogram_viz.dendrogram_viz.tidy">yes</option>
+        <option name="dendrogram_viz.dendrogram_viz.zoom">yes</option>
+        <option name="displayview">search</option>
+        <option name="drilldown">all</option>
+        <option name="height">450</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+      </viz>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Certificate Details</title>
+      <table id="tableVulnerabilities">
+        <search>
+          <query>`gvm_index` `gvm_sourcetype` signature="SSL/TLS:*"
+| rex field="result.description" "[\s,:]+(?&lt;certificate&gt;CN=.*?)\s+(Signature|key-size|public key size|subject|\(Server certificate\)|Certificate)"
+| rex field="result.description" "(\(serial:issuer\):|\|)\s+(?&lt;serial&gt;\w+)(:|\s(subject|signature algorithm))"
+| rex field="result.description" "valid until\s+\|\s+(?&lt;valid_until&gt;[\d\-:\s]+)\sUTC"
+| search certificate=*
+| stats latest(_time) as lastTime latest(valid_until) as valid_until values(dest) as dest by certificate, serial, dest_ip, result.port
+| eval status = if(now() &gt; strptime(valid_until, "%Y-%m-%d %H:%M:%S"), "Expired", "Valid")
+| eval lastTime = strftime(lastTime, "%Y-%m-%d %H:%M:%S")
+| table status, certificate, serial, dest, dest_ip, result.port, lastTime, valid_until
+| rename certificate as Certificate, serial as Serial, dest as Asset, dest_ip as "IP Address", result.port as Port, lastTime as "Last seen", valid_until as "Valid Until", status as Status</query>
+          <earliest>$timeToken.earliest$</earliest>
+          <latest>$timeToken.latest$</latest>
+        </search>
+        <option name="count">20</option>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <format type="color" field="Type">
+          <colorPalette type="sharedList"></colorPalette>
+          <scale type="sharedCategory"></scale>
+        </format>
+        <format type="color" field="Status">
+          <colorPalette type="map">{"Expired":#DC4E41,"Valid":#53A051}</colorPalette>
+        </format>
+        <format type="color" field="Port">
+          <colorPalette type="sharedList"></colorPalette>
+          <scale type="sharedCategory"></scale>
+        </format>
+      </table>
+    </panel>
+  </row>
+</form>

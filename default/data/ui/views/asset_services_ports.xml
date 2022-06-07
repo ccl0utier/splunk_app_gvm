@@ -1,0 +1,114 @@
+<form version="1.1" theme="dark">
+  <label>Asset Services &amp; Ports</label>
+  <description>This dashboard shows details about Services and Applications that might be exposed on ports for Assets in the environment</description>
+  <init>
+    <unset token="dendrogram_viz_drilldown"></unset>
+  </init>
+  <fieldset submitButton="false" autoRun="true">
+    <input type="time" token="timeToken" searchWhenChanged="true">
+      <label>Time</label>
+      <default>
+        <earliest>-7d@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="dropdown" token="tokAsset" searchWhenChanged="true">
+      <label>Asset</label>
+      <choice value="*">ALL</choice>
+      <default>*</default>
+      <initialValue>*</initialValue>
+      <fieldForLabel>dest</fieldForLabel>
+      <fieldForValue>dest</fieldForValue>
+      <search>
+        <query>`gvm_index` `gvm_sourcetype`
+| stats count by dest
+| fields - count
+| sort dest</query>
+        <earliest>-7d@h</earliest>
+        <latest>now</latest>
+      </search>
+    </input>
+    <input type="dropdown" token="tokPort" searchWhenChanged="true">
+      <label>Port</label>
+      <choice value="*">ALL</choice>
+      <default>*</default>
+      <initialValue>*</initialValue>
+      <fieldForLabel>port</fieldForLabel>
+      <fieldForValue>port</fieldForValue>
+      <search>
+        <query>`gvm_index` `gvm_sourcetype`
+| stats count by result.port
+| rename result.port as port
+| fields - count
+| sort port</query>
+        <earliest>-7d@h</earliest>
+        <latest>now</latest>
+      </search>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <title>Exposed Services &amp; Ports</title>
+      <viz id="vizSeverity" type="sankey_diagram_app.sankey_diagram">
+        <title>* Use your mouse to pan/zoom the visualization.</title>
+        <search>
+          <query>`gvm_index` `gvm_sourcetype` dest=TERM($tokAsset$) result.port=TERM($tokPort$)
+signature=*banner* OR signature=*detection* OR result.nvt{@oid} = TERM(`http_server_type_version_nvt_oid`) OR result.nvt{@oid} = TERM(`service_detection_nvt_oid`)
+AND (result.nvt{@oid} != TERM(`http_security_headers_nvt_oid`) result.nvt{@oid} != TERM(`deprecated_tls_protocol_nvt_oid`) result.nvt{@oid} != TERM(`icmp_timestamp_detection_nvt_oid`))
+| stats count by signature, dest, result.port
+| appendpipe [stats count by dest result.port | rename dest as source, result.port as target | sort target]
+| appendpipe [stats count by result.port signature | rename result.port as source, signature as target | sort source]
+| search source=*
+| fields source target count</query>
+          <earliest>$timeToken.earliest$</earliest>
+          <latest>$timeToken.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="displayview">search</option>
+        <option name="drilldown">all</option>
+        <option name="height">450</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+      </viz>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Services &amp; Ports Details</title>
+      <table id="tableVulnerabilities">
+        <search>
+          <query>`gvm_index` `gvm_sourcetype` dest=TERM($tokAsset$) result.port=TERM($tokPort$)
+signature=*banner* OR signature=*detection* OR result.nvt{@oid} = TERM(`http_server_type_version_nvt_oid`) OR result.nvt{@oid} = TERM(`service_detection_nvt_oid`)
+AND (result.nvt{@oid} != TERM(`http_security_headers_nvt_oid`) result.nvt{@oid} != TERM(`deprecated_tls_protocol_nvt_oid`) result.nvt{@oid} != TERM(`icmp_timestamp_detection_nvt_oid`))
+| rex mode=sed field=result.description "s/\s{2,}|\s*\|\s+Enumeration technique\s+\-+\s+/ /g"
+| stats values(dest) as Asset values(result.description) as Details by dest_ip, result.port
+| rename dest_ip as "IP Address", result.port as "Service Port"
+| table Asset, "IP Address", "Service Port", Details
+| sort "IP Address", "Service Port"</query>
+          <earliest>$timeToken.earliest$</earliest>
+          <latest>$timeToken.latest$</latest>
+        </search>
+        <option name="count">20</option>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <format type="color" field="Type">
+          <colorPalette type="sharedList"></colorPalette>
+          <scale type="sharedCategory"></scale>
+        </format>
+        <format type="color" field="Status">
+          <colorPalette type="map">{"Expired":#DC4E41,"Valid":#53A051}</colorPalette>
+        </format>
+        <format type="color" field="Port">
+          <colorPalette type="sharedList"></colorPalette>
+          <scale type="sharedCategory"></scale>
+        </format>
+        <format type="color" field="Service Port">
+          <colorPalette type="sharedList"></colorPalette>
+          <scale type="sharedCategory"></scale>
+        </format>
+      </table>
+    </panel>
+  </row>
+</form>

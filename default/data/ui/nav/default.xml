@@ -1,0 +1,22 @@
+<nav search_view="search">
+  <collection label="Vulnerabilities">
+    <view name="overview" default="true" />
+    <view name="vulnerability_details" />
+  </collection>
+  <collection label="Assets">
+    <view name="asset_overview" /> 
+    <view name="asset_details" /> 
+    <view name="asset_services_ports" /> 
+  </collection>
+  <collection label="Certificates">
+    <view name="certificate_overview" /> 
+  </collection>
+  <collection label="Others">
+    <view name="search" />
+    <view name="analytics_workspace" />
+    <view name="datasets" />
+    <view name="reports" />
+    <view name="alerts" />
+    <view name="dashboards" />
+  </collection>
+</nav>

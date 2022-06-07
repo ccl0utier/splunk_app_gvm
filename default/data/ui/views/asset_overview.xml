@@ -1,0 +1,124 @@
+<form version="1.1" theme="dark" script="asset_table_icons_inline.js" stylesheet="asset_table_decorations.css">
+  <label>Asset Overview</label>
+  <description>This dashboard shows an overview of assets detected in the environment by Greenbone Vulnerability Manager.</description>
+  <init>
+    <unset token="dendrogram_viz_drilldown"></unset>
+  </init>
+  <fieldset submitButton="false" autoRun="true">
+    <input type="time" token="timeToken" searchWhenChanged="true">
+      <label>Time</label>
+      <default>
+        <earliest>-7d@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <title>Asset Vulnerabilities Heatmap</title>
+      <input type="dropdown" token="tokGroupBy" searchWhenChanged="true">
+        <label>Group by:</label>
+        <choice value="os">Operating System</choice>
+        <choice value="max_severity">Maximum Severity</choice>
+        <choice value="subnet">Subnet</choice>
+        <default>os</default>
+        <initialValue>os</initialValue>
+      </input>
+      <viz id="vizSeverity" type="heatgrid_viz.heatgrid_viz">
+        <title>* Click on a particular asset for details.</title>
+        <search>
+          <query>`gvm_index` `gvm_sourcetype` severity!="informational" 
+| dedup result.nvt{@oid} dest 
+| rex field=dest_ip "(?&lt;subnet&gt;\d+\.\d+\.\d+)\.\d+" 
+| stats sum(cvss) as cvss count values(dest) as dest by dest_ip, subnet, severity 
+| eval severity_level = case(severity=="low", 1, severity=="medium", 2, severity=="high", 3, 1=1, -1) 
+| sort dest, -severity_level 
+| eval severity = upper(substr(severity, 1, 1)) + substr(severity, 2) + ": &lt;strong&gt;" + count + "&lt;/strong&gt;" 
+| stats sum(cvss) as score list(severity) as vulnerabilities max(severity_level) as max_severity values(dest) as dest by dest_ip, subnet 
+| join type=outer dest_ip 
+    [ search `gvm_index` `gvm_sourcetype` "result.nvt{@oid}"=TERM(`os_detection_nvt_oid`) 
+    | dedup dest_ip 
+    | rex field=result.description "OS:\s+OS:\s+(?&lt;os&gt;.*?)\s(CPE:|Version:)" 
+    `categorize_operating_systems(os)` 
+    | fields dest_ip, os
+        ]
+| fillnull value="Undetermined" os
+| fields - severity_level 
+| eval max_severity = if(isnull(max_severity) OR max_severity == "", 0, max_severity) 
+| eval max_severity = case(max_severity==0, "Informational", max_severity==1, "Low", max_severity==2, "Medium", max_severity==3, "High", true(), "Unknown") 
+| eval score = if(isnull(score) OR score == "", 0, score) 
+| eval subnet = subnet + ".0/24" 
+| eval group = $tokGroupBy$ 
+| eval tooltip_html = "&lt;strong&gt;" + mvjoin(dest, "&lt;br/&gt;") + "&lt;/strong&gt;&lt;br/&gt;CVSS Total Score: &lt;strong&gt;" + score + "&lt;/strong&gt;&lt;br/&gt;" + coalesce(mvjoin(vulnerabilities, " "), "None") 
+| rename score as value
+| eval drilldown = dest
+| table group, value, drilldown, tooltip_html</query>
+          <earliest>$timeToken.earliest$</earliest>
+          <latest>$timeToken.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="displayview">search</option>
+        <option name="drilldown">all</option>
+        <option name="heatgrid_viz.heatgrid_viz.color">greentored1</option>
+        <option name="heatgrid_viz.heatgrid_viz.groupbg">full</option>
+        <option name="heatgrid_viz.heatgrid_viz.margin">1</option>
+        <option name="heatgrid_viz.heatgrid_viz.max">100</option>
+        <option name="heatgrid_viz.heatgrid_viz.maxrows">5000</option>
+        <option name="heatgrid_viz.heatgrid_viz.min">0</option>
+        <option name="heatgrid_viz.heatgrid_viz.shape">hexagon</option>
+        <option name="heatgrid_viz.heatgrid_viz.token">heatgrid_viz_drilldown</option>
+        <option name="height">450</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+        <drilldown>
+          <link target="_blank">/app/splunk_app_gvm/asset_details?form.tokAsset=$heatgrid_viz_drilldown$</link>
+        </drilldown>
+      </viz>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Asset Vulnerabilities Details</title>
+      <table id="tableAssets">
+        <search>
+          <query>`gvm_index` `gvm_sourcetype`
+| dedup result.nvt{@oid} dest 
+| rex field=dest_ip "(?&lt;subnet&gt;\d+\.\d+\.\d+)\.\d+" 
+| eval severity_level = case(severity=="informational", 0, severity=="low", 1, severity=="medium", 2, severity=="high", 3, 1=1, -1) 
+| stats count(eval(severity!="informational")) as Total count(eval(severity=="informational")) as Informational count(eval(severity=="low")) as Low count(eval(severity=="medium")) as Medium count(eval(severity=="high")) as High max(severity_level) as max_severity sum(cvss) as score values(dest) as dest by dest_ip, subnet 
+| eval max_severity = case(max_severity==0, "Informational", max_severity==1, "Low", max_severity==2, "Medium", max_severity==3, "High", true(), "Unknown") 
+| eval subnet = subnet + ".0/24" 
+| join type=outer dest_ip 
+    [ search `gvm_index` `gvm_sourcetype` "result.nvt{@oid}"=TERM(`os_detection_nvt_oid`) 
+    | dedup dest_ip 
+    | rex field=result.description "OS:\s+OS:\s+(?&lt;os&gt;.*?)\s(CPE:|Version:)" 
+    `categorize_operating_systems(os)` 
+    | fields dest_ip, os
+        ]
+| fillnull value="Undetermined" os
+| table dest, subnet, os, max_severity, score, Informational, Low, Medium, High, Total
+| sort -score
+| rename dest as Asset, subnet as "Network Subnet", max_severity as "Highest Sev.", score as "Total Vuln. Score", os as "Operating System"</query>
+          <earliest>$timeToken.earliest$</earliest>
+          <latest>$timeToken.latest$</latest>
+        </search>
+        <option name="count">20</option>
+        <option name="drilldown">row</option>
+        <option name="refresh.display">progressbar</option>
+        <format type="color" field="Vuln. Score">
+          <colorPalette type="minMidMax" maxColor="#D41F1F" minColor="#DCC160"></colorPalette>
+          <scale type="minMidMax"></scale>
+        </format>
+        <format type="color" field="Highest Sev.">
+          <colorPalette type="map">{"Low":#DCC160,"Medium":#DD9F54,"High":#D41F1F}</colorPalette>
+        </format>
+        <format type="color" field="Total Vuln. Score">
+          <colorPalette type="minMidMax" maxColor="#DC4E41" midColor="#F8BE34" minColor="#FFFFFF"></colorPalette>
+          <scale type="minMidMax" midType="percent" midValue="50"></scale>
+        </format>
+      </table>
+    </panel>
+  </row>
+</form>
