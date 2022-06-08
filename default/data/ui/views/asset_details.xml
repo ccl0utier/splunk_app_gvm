@@ -105,8 +105,8 @@
           <query>`gvm_index` `gvm_sourcetype` result{@id}="$dendrogram_viz_drilldown$" dest=TERM($tokAsset$)
 | head 1
 `make_proper_case(severity)`
-| table signature, category, severity, result.description, insight, impact
-| rename signature as "Vulnerability", category as Category, severity as Severity, result.description as Description, insight as Insight, impact as Impact</query>
+| table signature, category, severity, result.description, insight, result.nvt.solution
+| rename signature as "Vulnerability", category as Category, severity as Severity, result.description as Description, insight as Insight, result.nvt.solution as Solution</query>
           <earliest>$timeToken.earliest$</earliest>
           <latest>$timeToken.latest$</latest>
         </search>

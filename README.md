@@ -63,6 +63,10 @@ The main **Vulnerability Manager Overview** dashboard gives the user a bird's ey
 
 ![Vulnerability Manager Overview](readme/Greenbone Vulnerability Manager Overview.png)
 
+The **Vulnerability Details** dashboard allows a much deeper dive into individual vulnerabilities detected in the environment.
+
+![Vulnerability Details](readme/Vulnerability Details.gif)
+
 The **Asset Overview** dashboard gives the user an overall view of the different assets detected within the environment, grouped by operating system, highest severity or network subnet.  This enables finding 
 the most vulnerable assets very quickly.  The user can then drilldown to any of the assets for further details.
 
