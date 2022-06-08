@@ -61,28 +61,28 @@ The application provides the following insights/dashboards:
 
 The main **Vulnerability Manager Overview** dashboard gives the user a bird's eye view of the environment vulnerabiltiy posture.  It show vulnerabilities by severity, the history of scan results as well as critical CVEs detected, details on assets and certificates and finally allows the user to drilldown to any of these areas for more details.
 
-![Vulnerability Manager Overview](readme/Greenbone Vulnerability Manager Overview.png)
+![Vulnerability Manager Overview](readme/Greenbone%20Vulnerability%20Manager%20Overview.png)
 
 The **Vulnerability Details** dashboard allows a much deeper dive into individual vulnerabilities detected in the environment.
 
-![Vulnerability Details](readme/Vulnerability Details.gif)
+![Vulnerability Details](readme/Vulnerability%20Details.gif)
 
 The **Asset Overview** dashboard gives the user an overall view of the different assets detected within the environment, grouped by operating system, highest severity or network subnet.  This enables finding 
 the most vulnerable assets very quickly.  The user can then drilldown to any of the assets for further details.
 
-![Asset Overview](readme/Asset Overview.png)
+![Asset Overview](readme/Asset%20Overview.png)
 
 The **Asset Details** dashboard gives the user full vulnerability details around a selected asset as well as detected applications, hardware and operating system as applicable.  Any of the asset vulnerabilities can be clicked for more details including the vulnerability's full description as well as details around fixing or mitigating it when available.
 
-![Asset Details](readme/Asset Details.png)
+![Asset Details](readme/Asset%20Details.png)
 
 The **Asset Services & Ports** provides insight into services and ports exposed within the environment in general or specific to a particular asset or port.
 
-![Services and Ports](readme/Services and Ports.png)
+![Services and Ports](readme/Services%20and%20Ports.png)
 
 The **Certificate Overview** dashboard provides insight into the SSL/TLS Certificates used within the environment for various services, including clear relationship between hosts, services, ports and certicates as well as the status of each certificate, allowing you to easily see which ones have or are close to being expired.  It's then trivial to setup an alert for any certificates about to expire.
 
-![Certificate Overview](readme/Certificate Overview.png)
+![Certificate Overview](readme/Certificate%20Overview.png)
 
 ## Feedback
 
