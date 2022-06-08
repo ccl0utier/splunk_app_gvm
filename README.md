@@ -1,6 +1,14 @@
-`splunk_app_gvm`
-
 # Greenbone Vulnerability Manager (formerly OpenVAS) App for Splunk
+
+## Overview
+
+### About the Greenbone Vulnerability Manager App for Splunk
+
+|                       |                                                         |
+|-----------------------|---------------------------------------------------------|
+| Version               | 1.0.0                                                   |
+| Vendor Products       | Greenbone Community Edition (GCE). Others are untested. |
+| Visible in Splunk Web | Yes.                                                    |
 
 ## Description
 
