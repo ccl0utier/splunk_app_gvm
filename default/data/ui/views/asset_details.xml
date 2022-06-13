@@ -22,7 +22,7 @@
 | fields - count
 | sort dest</query>
         <earliest>$timeToken.earliest$</earliest>
-          <latest>$timeToken.latest$</latest>
+        <latest>$timeToken.latest$</latest>
       </search>
       <change>
         <unset token="dendrogram_viz_drilldown"></unset>
@@ -32,8 +32,17 @@
   <row>
     <panel>
       <title>Asset Vulnerabilities</title>
+      <html>
+        <style>
+          .dashboard-row .dashboard-panel .panel-head h3 {
+             border: 1px dashed #20689C;
+             border-left: 6px solid #20689C;
+             font-weight: normal;
+          }
+        </style>
+      </html>
       <viz id="vizSeverity" type="dendrogram_viz.dendrogram_viz">
-        <title>* Click on a particular vulnerability for details.</title>
+        <title>Note: Click on a particular vulnerability for more details.</title>
         <search>
           <query>`gvm_index` `gvm_sourcetype` dest=TERM($tokAsset$) 
 | eval drilldown='result{@id}' 

@@ -24,8 +24,17 @@
         <default>os</default>
         <initialValue>os</initialValue>
       </input>
+      <html>
+        <style>
+          .dashboard-row .dashboard-panel .panel-head h3 {
+             border: 1px dashed #20689C;
+             border-left: 6px solid #20689C;
+             font-weight: normal;
+          }
+        </style>
+      </html>
       <viz id="vizSeverity" type="heatgrid_viz.heatgrid_viz">
-        <title>* Click on a particular asset for details.</title>
+        <title>Note: Click on a particular asset for more details.</title>
         <search>
           <query>`gvm_index` `gvm_sourcetype` severity!="informational" 
 | dedup result.nvt{@oid} dest 
@@ -105,8 +114,8 @@
           <latest>$timeToken.latest$</latest>
         </search>
         <option name="count">20</option>
+        <option name="dataOverlayMode">none</option>
         <option name="drilldown">row</option>
-        <option name="refresh.display">progressbar</option>
         <format type="color" field="Vuln. Score">
           <colorPalette type="minMidMax" maxColor="#D41F1F" minColor="#DCC160"></colorPalette>
           <scale type="minMidMax"></scale>
@@ -117,6 +126,10 @@
         <format type="color" field="Total Vuln. Score">
           <colorPalette type="minMidMax" maxColor="#DC4E41" midColor="#F8BE34" minColor="#FFFFFF"></colorPalette>
           <scale type="minMidMax" midType="percent" midValue="50"></scale>
+        </format>
+        <format type="color" field="Total">
+          <colorPalette type="list">[#294E70]</colorPalette>
+          <scale type="threshold"></scale>
         </format>
       </table>
     </panel>

@@ -49,8 +49,17 @@
   <row>
     <panel>
       <title>Exposed Services &amp; Ports</title>
+      <html>
+        <style>
+          .dashboard-row .dashboard-panel .panel-head h3 {
+             border: 1px dashed #20689C;
+             border-left: 6px solid #20689C;
+             font-weight: normal;
+          }
+        </style>
+      </html>
       <viz id="vizSeverity" type="sankey_diagram_app.sankey_diagram">
-        <title>* Use your mouse to pan/zoom the visualization.</title>
+        <title>Note: You can use your mouse to pan/zoom the visualization.</title>
         <search>
           <query>`gvm_index` `gvm_sourcetype` dest=TERM($tokAsset$) result.port=TERM($tokPort$)
 signature=*banner* OR signature=*detection* OR result.nvt{@oid} = TERM(`http_server_type_version_nvt_oid`) OR result.nvt{@oid} = TERM(`service_detection_nvt_oid`)

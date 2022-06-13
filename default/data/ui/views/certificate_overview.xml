@@ -16,8 +16,17 @@
   <row>
     <panel>
       <title>Certificate Usage</title>
+      <html>
+        <style>
+          .dashboard-row .dashboard-panel .panel-head h3 {
+             border: 1px dashed #20689C;
+             border-left: 6px solid #20689C;
+             font-weight: normal;
+          }
+        </style>
+      </html>
       <viz id="vizSeverity" type="dendrogram_viz.dendrogram_viz">
-        <title>* Use your mouse to pan/zoom the visualization.</title>
+        <title>Note: You can use your mouse to pan/zoom the visualization.</title>
         <search>
           <query>`gvm_index` `gvm_sourcetype` signature="SSL/TLS:*" 
 | rex field="result.description" "[\s,:]+(?&lt;certificate&gt;CN=.*?)\s+(Signature|key-size|public key size|subject|\(Server certificate\)|Certificate)" 
