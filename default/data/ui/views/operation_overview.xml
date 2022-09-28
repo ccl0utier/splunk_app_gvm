@@ -1,0 +1,253 @@
+<form version="1.1" theme="dark">
+  <label>Operational Overview</label>
+  <description>This dashboard shows details around the operation of the Greenbone Vulnerability Manager environment.</description>
+  <fieldset submitButton="false" autoRun="true">
+    <input type="time" token="timeToken" searchWhenChanged="true">
+      <label>Time</label>
+      <default>
+        <earliest>-7d@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <html>
+      <h1>Vulnerability Manager Activity</h1>
+    </html>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <single>
+        <title>Completed Scans</title>
+        <search>
+          <query>`gvm_logs_index` `gvmd_logs_sourcetype` app=event action=Done change_type=task
+| stats count</query>
+          <earliest>$timeToken.earliest$</earliest>
+          <latest>$timeToken.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <title>Scanned Endpoints</title>
+        <search>
+          <query>`gvm_logs_index` `openvas_logs_sourcetype` scan "for host"
+| stats dc(src_ip)</query>
+          <earliest>$timeToken.earliest$</earliest>
+          <latest>$timeToken.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+      </single>
+    </panel>
+    <panel>
+      <table>
+        <title>Scans - Details</title>
+        <search>
+          <query>`gvm_logs_index` `gvmd_logs_sourcetype` app=event action=Done change_type=task
+| table _time, task_name
+| rename task_name as "Scan Name"</query>
+          <earliest>$timeToken.earliest$</earliest>
+          <latest>$timeToken.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <format type="color" field="task_name">
+          <colorPalette type="sharedList"></colorPalette>
+          <scale type="sharedCategory"></scale>
+        </format>
+        <format type="color" field="Scan Name">
+          <colorPalette type="sharedList"></colorPalette>
+          <scale type="sharedCategory"></scale>
+        </format>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <single>
+        <title>Tasks Activity</title>
+        <search>
+          <query>`gvm_logs_index` `gvmd_logs_sourcetype` app=event 
+| timechart count</query>
+          <earliest>$timeToken.earliest$</earliest>
+          <latest>$timeToken.latest$</latest>
+        </search>
+        <option name="colorBy">trend</option>
+        <option name="colorMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="rangeColors">["0x53a051","0x0877a6","0xf8be34","0xf1813f","0xdc4e41"]</option>
+        <option name="underLabel">event(s)</option>
+        <option name="useColors">1</option>
+      </single>
+    </panel>
+    <panel>
+      <table>
+        <title>Alerts Triggered</title>
+        <search>
+          <query>`gvm_logs_index` `gvmd_logs_sourcetype` component=alert
+| rex "The alert (?&lt;alert_name&gt;.*) was triggered"
+| table _time, alert_name, action
+| rename action as Status, alert_name as "Alert triggered"</query>
+          <earliest>$timeToken.earliest$</earliest>
+          <latest>$timeToken.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <format type="color" field="Status">
+          <colorPalette type="map">{"Done":#118832}</colorPalette>
+        </format>
+        <format type="color" field="Alert triggered">
+          <colorPalette type="sharedList"></colorPalette>
+          <scale type="sharedCategory"></scale>
+        </format>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <html>
+      <h1>Vulnerability Manager Messages</h1>
+    </html>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <chart>
+        <title>By Severity</title>
+        <search>
+          <query>`gvm_logs_index` `gvmd_logs_sourcetype` OR `gsad_logs_sourcetype` OR `ospd_logs_sourcetype` OR `openvas_logs_sourcetype`
+| fillnull value="OTHER" log_level
+| timechart count by log_level</query>
+          <earliest>$timeToken.earliest$</earliest>
+          <latest>$timeToken.latest$</latest>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+    <panel>
+      <table>
+        <title>By Severity - Details</title>
+        <search>
+          <query>`gvm_logs_index` `gvmd_logs_sourcetype` OR `gsad_logs_sourcetype` OR `ospd_logs_sourcetype` OR `openvas_logs_sourcetype`
+| stats count by log_level
+| rename log_level as Severity, count as Messages</query>
+          <earliest>$timeToken.earliest$</earliest>
+          <latest>$timeToken.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <format type="color" field="log_level">
+          <colorPalette type="sharedList"></colorPalette>
+          <scale type="sharedCategory"></scale>
+        </format>
+        <format type="color" field="Severity">
+          <colorPalette type="sharedList"></colorPalette>
+          <scale type="sharedCategory"></scale>
+        </format>
+      </table>
+    </panel>
+    <panel>
+      <chart>
+        <title>By User</title>
+        <search>
+          <query>`gvm_logs_index` `gvmd_logs_sourcetype` OR `gsad_logs_sourcetype` OR `ospd_logs_sourcetype` OR `openvas_logs_sourcetype`
+| stats count by user</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="charting.chart">pie</option>
+        <option name="charting.drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <html>
+      <h1>Vulnerability Manager Authentications</h1>
+    </html>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <table>
+        <title>Login Details</title>
+        <search>
+          <query>`gvm_logs_index` `gsad_logs_sourcetype` tag=authentication
+| table _time, user, src, action
+| sort - _time
+| rename user as User, src as "IP Address", action as Result</query>
+          <earliest>$timeToken.earliest$</earliest>
+          <latest>$timeToken.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <format type="color" field="Result">
+          <colorPalette type="map">{"success":#118832,"failure":#D41F1F}</colorPalette>
+        </format>
+      </table>
+    </panel>
+    <panel>
+      <chart>
+        <title>By Result</title>
+        <search>
+          <query>`gvm_logs_index` `gsad_logs_sourcetype` tag=authentication
+| stats count by action</query>
+          <earliest>$timeToken.earliest$</earliest>
+          <latest>$timeToken.latest$</latest>
+        </search>
+        <option name="charting.chart">pie</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+    <panel>
+      <chart>
+        <title>By Source</title>
+        <search>
+          <query>`gvm_logs_index` `gsad_logs_sourcetype` tag=authentication
+| stats count by src</query>
+          <earliest>$timeToken.earliest$</earliest>
+          <latest>$timeToken.latest$</latest>
+        </search>
+        <option name="charting.chart">pie</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <html>
+      <h1>Vulnerability Manager Changes</h1>
+    </html>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <table>
+        <search>
+          <query>`gvm_logs_index` `gvmd_logs_sourcetype` tag=change
+| eval actor = if(isnull(user), "System initiated", "User initiated")
+| table _time, actor, user, component, action, message
+| rename actor as Actor, user as User, component as Component, action as "Action Taken", message as "Change Details"</query>
+          <earliest>$timeToken.earliest$</earliest>
+          <latest>$timeToken.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <format type="color" field="Actor">
+          <colorPalette type="map">{"System initiated":#65778A,"User initiated":#115BAD}</colorPalette>
+        </format>
+        <format type="color" field="Component">
+          <colorPalette type="sharedList"></colorPalette>
+          <scale type="sharedCategory"></scale>
+        </format>
+      </table>
+    </panel>
+  </row>
+</form>

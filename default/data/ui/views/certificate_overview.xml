@@ -84,11 +84,11 @@
 | rex field="result.description" "(\(serial:issuer\):|\|)\s+(?&lt;serial&gt;\w+)(:|\s(subject|signature algorithm))"
 | rex field="result.description" "valid until\s+\|\s+(?&lt;valid_until&gt;[\d\-:\s]+)\sUTC"
 | search certificate=*
-| stats latest(_time) as lastTime latest(valid_until) as valid_until values(dest) as dest by certificate, serial, dest_ip, result.port
+| stats latest(_time) as lastTime latest(valid_until) as valid_until values(dest) as dest by certificate, serial, dest_ip, location
 | eval status = if(now() &gt; strptime(valid_until, "%Y-%m-%d %H:%M:%S"), "Expired", "Valid")
 | eval lastTime = strftime(lastTime, "%Y-%m-%d %H:%M:%S")
-| table status, certificate, serial, dest, dest_ip, result.port, lastTime, valid_until
-| rename certificate as Certificate, serial as Serial, dest as Asset, dest_ip as "IP Address", result.port as Port, lastTime as "Last seen", valid_until as "Valid Until", status as Status</query>
+| table status, certificate, serial, dest, dest_ip, location, lastTime, valid_until
+| rename certificate as Certificate, serial as Serial, dest as Asset, dest_ip as "IP Address", location as Port, lastTime as "Last seen", valid_until as "Valid Until", status as Status</query>
           <earliest>$timeToken.earliest$</earliest>
           <latest>$timeToken.latest$</latest>
         </search>

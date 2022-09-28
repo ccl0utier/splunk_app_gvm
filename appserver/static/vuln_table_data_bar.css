@@ -52,14 +52,16 @@ tr.expanded-content-row li {
 
 tr.expanded-content-row code {
     background: #212527;
-    border: 1px solid #ddd;
     border-left: 3px solid #53963e;
+    border: 1px solid #ddd;
     color: #9FFB7C;
+    display: block;
     font-family: sans-serif;
     font-size: 13px;
     line-height: 1.0;
     padding: 8px 10px;
-    display: block;
+    white-space: normal;
+    word-break: break-all;
     word-wrap: break-word;
 
 #    background: #f4f4f4;

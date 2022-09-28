@@ -11,6 +11,9 @@
   <collection label="Certificates">
     <view name="certificate_overview" /> 
   </collection>
+  <collection label="Operations">
+    <view name="operation_overview" /> 
+  </collection>
   <collection label="Others">
     <view name="search" />
     <view name="analytics_workspace" />

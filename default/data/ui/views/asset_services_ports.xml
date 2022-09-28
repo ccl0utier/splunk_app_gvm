@@ -37,8 +37,9 @@
       <fieldForValue>port</fieldForValue>
       <search>
         <query>`gvm_index` `gvm_sourcetype`
-| stats count by result.port
-| rename result.port as port
+| where match(location, "^\d+\/\w+$")
+| stats count by location
+| rename location as port
 | fields - count
 | sort port</query>
         <earliest>-7d@h</earliest>
@@ -61,12 +62,12 @@
       <viz id="vizSeverity" type="sankey_diagram_app.sankey_diagram">
         <title>Note: You can use your mouse to pan/zoom the visualization.</title>
         <search>
-          <query>`gvm_index` `gvm_sourcetype` dest=TERM($tokAsset$) result.port=TERM($tokPort$)
+          <query>`gvm_index` `gvm_sourcetype` dest=TERM($tokAsset$) location=TERM($tokPort$)
 signature=*banner* OR signature=*detection* OR result.nvt{@oid} = TERM(`http_server_type_version_nvt_oid`) OR result.nvt{@oid} = TERM(`service_detection_nvt_oid`)
 AND (result.nvt{@oid} != TERM(`http_security_headers_nvt_oid`) result.nvt{@oid} != TERM(`deprecated_tls_protocol_nvt_oid`) result.nvt{@oid} != TERM(`icmp_timestamp_detection_nvt_oid`))
-| stats count by signature, dest, result.port
-| appendpipe [stats count by dest result.port | rename dest as source, result.port as target | sort target]
-| appendpipe [stats count by result.port signature | rename result.port as source, signature as target | sort source]
+| stats count by signature, dest, location
+| appendpipe [stats count by dest location | rename dest as source, location as target | sort target]
+| appendpipe [stats count by location signature | rename location as source, signature as target | sort source]
 | search source=*
 | fields source target count</query>
           <earliest>$timeToken.earliest$</earliest>
@@ -88,12 +89,12 @@ AND (result.nvt{@oid} != TERM(`http_security_headers_nvt_oid`) result.nvt{@oid} 
       <title>Services &amp; Ports Details</title>
       <table id="tableVulnerabilities">
         <search>
-          <query>`gvm_index` `gvm_sourcetype` dest=TERM($tokAsset$) result.port=TERM($tokPort$)
+          <query>`gvm_index` `gvm_sourcetype` dest=TERM($tokAsset$) location=TERM($tokPort$)
 signature=*banner* OR signature=*detection* OR result.nvt{@oid} = TERM(`http_server_type_version_nvt_oid`) OR result.nvt{@oid} = TERM(`service_detection_nvt_oid`)
 AND (result.nvt{@oid} != TERM(`http_security_headers_nvt_oid`) result.nvt{@oid} != TERM(`deprecated_tls_protocol_nvt_oid`) result.nvt{@oid} != TERM(`icmp_timestamp_detection_nvt_oid`))
 | rex mode=sed field=result.description "s/\s{2,}|\s*\|\s+Enumeration technique\s+\-+\s+/ /g"
-| stats values(dest) as Asset values(result.description) as Details by dest_ip, result.port
-| rename dest_ip as "IP Address", result.port as "Service Port"
+| stats values(dest) as Asset values(result.description) as Details by dest_ip, location
+| rename dest_ip as "IP Address", location as "Service Port"
 | table Asset, "IP Address", "Service Port", Details
 | sort "IP Address", "Service Port"</query>
           <earliest>$timeToken.earliest$</earliest>
