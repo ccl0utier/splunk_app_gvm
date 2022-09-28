@@ -6,7 +6,7 @@
 
 |                       |                                                         |
 |-----------------------|---------------------------------------------------------|
-| Version               | 1.0.0                                                   |
+| Version               | 1.0.1                                                   |
 | Vendor Products       | Greenbone Community Edition (GCE). Others are untested. |
 | Visible in Splunk Web | Yes.                                                    |
 
@@ -91,6 +91,10 @@ The **Asset Services & Ports** provides insight into services and ports exposed 
 The **Certificate Overview** dashboard provides insight into the SSL/TLS Certificates used within the environment for various services, including clear relationship between hosts, services, ports and certicates as well as the status of each certificate, allowing you to easily see which ones have or are close to being expired.  It's then trivial to setup an alert for any certificates about to expire.
 
 ![Certificate Overview](readme/Certificate%20Overview.png)
+
+Finally, the **Operational Overview** dashbaord gives you a bird's eye view of the operation of your Greenbone Vulnerability Management env. by giving you details on activities being performed (tasks, alerts, messages) and showing you authentication data and change auditing information.
+
+![Operational Overview](readme/Operational%20Overview.png)
 
 ## Feedback
 
