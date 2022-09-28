@@ -92,7 +92,7 @@ The **Certificate Overview** dashboard provides insight into the SSL/TLS Certifi
 
 ![Certificate Overview](readme/Certificate%20Overview.png)
 
-Finally, the **Operational Overview** dashbaord gives you a bird's eye view of the operation of your Greenbone Vulnerability Management env. by giving you details on activities being performed (tasks, alerts, messages) and showing you authentication data and change auditing information.
+Finally, the **Operational Overview** dashboard gives you a bird's eye view of the operation of your Greenbone Vulnerability Management env. by giving you details on activities being performed (tasks, alerts, messages) and showing you authentication data and change auditing information.
 
 ![Operational Overview](readme/Operational%20Overview.png)
 
